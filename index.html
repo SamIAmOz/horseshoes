@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Iron Pit — Horseshoe Pitching Tracker</title>
+  <meta name="description" content="Track your horseshoe pitching throws, scores, and stats.">
+  <link rel="stylesheet" href="css/style.css">
+  <!-- Chart.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js" defer></script>
+</head>
+<body>
+
+<!-- ── HEADER ─────────────────────────────────────────────── -->
+<header id="site-header">
+  <a href="#intro" class="site-logo">
+    <svg class="logo-icon" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="24" cy="24" r="20" stroke="#C9A96E" stroke-width="5" fill="none"/>
+      <circle cx="24" cy="24" r="8"  stroke="#C9A96E" stroke-width="4" fill="none"/>
+      <path d="M4 24 Q6 10 24 4" stroke="#B34A2E" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+      <path d="M44 24 Q42 38 24 44" stroke="#B34A2E" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+    </svg>
+    <span class="logo-text">Iron<span>Pit</span></span>
+  </a>
+
+  <nav id="site-nav">
+    <a href="#intro"     class="nav-link" data-page="intro">Home</a>
+    <a href="#throw"     class="nav-link nav-auth" data-page="throw">Log Throws</a>
+    <a href="#dashboard" class="nav-link nav-auth" data-page="dashboard">Dashboard</a>
+    <a href="#scoring"   class="nav-link nav-auth" data-page="scoring">Scoring</a>
+
+    <div id="user-pill" style="display:none">
+      <div class="user-avatar" id="user-initial">?</div>
+      <span class="user-email" id="user-email-display"></span>
+      <button class="btn-signout" onclick="signOut()">Sign Out</button>
+    </div>
+
+    <button class="btn btn-outline btn-sm" id="btn-nav-signin"
+      onclick="AuthUI.show()" style="margin-left:0.5rem">Sign In</button>
+  </nav>
+</header>
+
+<!-- ── AUTH OVERLAY ───────────────────────────────────────── -->
+<div id="auth-overlay">
+  <div class="auth-box">
+    <div class="auth-logo">
+      <svg style="width:40px;height:40px;margin-bottom:0.5rem" viewBox="0 0 48 48" fill="none">
+        <circle cx="24" cy="24" r="20" stroke="#C9A96E" stroke-width="5" fill="none"/>
+        <circle cx="24" cy="24" r="8"  stroke="#C9A96E" stroke-width="4" fill="none"/>
+        <path d="M4 24 Q6 10 24 4" stroke="#B34A2E" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+        <path d="M44 24 Q42 38 24 44" stroke="#B34A2E" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+      </svg>
+      <div class="logo-text" style="color:var(--iron)">Iron<span style="color:var(--rust)">Pit</span></div>
+    </div>
+
+    <div class="auth-tab-bar">
+      <button class="auth-tab active" data-tab="signin" id="tab-signin">Sign In</button>
+      <button class="auth-tab" data-tab="signup" id="tab-signup">Create Account</button>
+      <button class="auth-tab" data-tab="forgot" id="tab-forgot">Reset Password</button>
+    </div>
+
+    <!-- Sign In -->
+    <div class="auth-panel active" id="panel-signin">
+      <div class="auth-message" id="msg-signin"></div>
+      <form id="signin-form">
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="signin-email" placeholder="you@example.com" autocomplete="email">
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="signin-password" placeholder="••••••••" autocomplete="current-password">
+          <div class="form-hint">Press Enter to sign in</div>
+        </div>
+        <button type="submit" class="btn btn-primary btn-full mt-2" id="btn-signin">Sign In</button>
+      </form>
+    </div>
+
+    <!-- Sign Up -->
+    <div class="auth-panel" id="panel-signup">
+      <div class="auth-message" id="msg-signup"></div>
+      <form id="signup-form">
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="signup-email" placeholder="you@example.com" autocomplete="email">
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="signup-password" placeholder="Min. 8 characters" autocomplete="new-password">
+        </div>
+        <div class="form-group">
+          <label>Confirm Password</label>
+          <input type="password" id="signup-confirm" placeholder="Repeat password" autocomplete="new-password">
+        </div>
+        <button type="submit" class="btn btn-primary btn-full mt-2" id="btn-signup">Create Account</button>
+      </form>
+    </div>
+
+    <!-- Forgot -->
+    <div class="auth-panel" id="panel-forgot">
+      <div class="auth-message" id="msg-forgot"></div>
+      <form id="forgot-form">
+        <div class="form-group">
+          <label>Email Address</label>
+          <input type="email" id="forgot-email" placeholder="you@example.com">
+          <div class="form-hint">We'll send a reset link to your inbox.</div>
+        </div>
+        <button type="submit" class="btn btn-primary btn-full mt-2" id="btn-forgot">Send Reset Link</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     PAGE: INTRO
+════════════════════════════════════════════════════════════ -->
+<div class="page active" id="page-intro">
+
+  <div class="intro-hero">
+    <div class="horseshoe-bg">🧲</div>
+    <div class="intro-hero-content">
+      <span class="eyebrow" style="color:var(--tan)">Welcome to IronPit</span>
+      <h1>Your <em>Personal</em> Horseshoe Pitching Ledger</h1>
+      <p>Track every throw, score every game, and watch your game improve — with stats built for serious pitchers.</p>
+      <div class="flex gap-2 mt-3">
+        <button class="btn btn-primary btn-lg" onclick="AuthUI.show()">Get Started — It's Free</button>
+        <a href="#intro-sport" class="btn btn-secondary btn-lg" style="color:var(--cream);border-color:rgba(245,237,216,0.3)">Learn the Sport ↓</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-inner">
+    <!-- Purpose section -->
+    <section style="padding:3rem 0 2rem">
+      <span class="eyebrow">Why IronPit?</span>
+      <h2 style="margin-bottom:1rem">Purpose-built for the pit</h2>
+      <p style="max-width:620px">IronPit is a personal tracking tool for horseshoe pitchers who want to take their game seriously. Log practice sessions, record live games with real scoring, and visualize your progress over time.</p>
+
+      <div class="info-grid mt-4">
+        <div class="info-card">
+          <div class="info-card-icon">🎯</div>
+          <h3>Throw Logging</h3>
+          <p style="font-size:0.9rem;margin-top:0.5rem">Record every shoe — Ringer, Leaner, Scorer, or No Score — whether you're practicing solo or competing.</p>
+        </div>
+        <div class="info-card">
+          <div class="info-card-icon">📊</div>
+          <h3>Progress Dashboard</h3>
+          <p style="font-size:0.9rem;margin-top:0.5rem">See your shot type breakdown over time, filter by player, and zoom into the last 50, 100, or 1000 throws.</p>
+        </div>
+        <div class="info-card">
+          <div class="info-card-icon">🏆</div>
+          <h3>Live Game Scoring</h3>
+          <p style="font-size:0.9rem;margin-top:0.5rem">Track multi-player games in real time with cancellation or all-counting rules, end by end.</p>
+        </div>
+        <div class="info-card">
+          <div class="info-card-icon">🔒</div>
+          <h3>Private & Secure</h3>
+          <p style="font-size:0.9rem;margin-top:0.5rem">Your data is yours. Stored securely in a personal database with row-level security on every record.</p>
+        </div>
+      </div>
+    </section>
+
+    <hr class="section-divider" id="intro-sport">
+
+    <!-- About the sport -->
+    <section style="padding:2rem 0">
+      <span class="eyebrow">The Sport</span>
+      <h2 style="margin-bottom:1rem">About Horseshoe Pitching</h2>
+      <p style="max-width:680px">Horseshoe pitching is one of America's oldest backyard sports — a game of skill, precision, and consistency. Players take turns pitching horseshoes at a stake set in the ground 40 feet away (27 feet for women and juniors), trying to ring the stake or land as close as possible.</p>
+
+      <div class="rules-box mt-3">
+        <h3>Basic Rules & Shot Values</h3>
+        <ul>
+          <li><strong style="color:#ffd89b">Ringer (3 pts)</strong> — The shoe encircles the stake. A straight line touching both ends of the shoe must clear the stake.</li>
+          <li><strong style="color:#a8e6cf">Leaner (2 pts)</strong> — The shoe leans against the stake. Counts as a scoring shoe.</li>
+          <li><strong style="color:#a9d4f5">Scorer (1 pt)</strong> — The shoe lands within 6 inches of the stake but does not lean.</li>
+          <li><strong style="color:#ccc">No Score (0 pts)</strong> — All other shoes that do not meet scoring criteria.</li>
+          <li><strong style="color:var(--tan)">Cancellation Scoring</strong> — Only the player with the closest shoe or ringer scores. Equal values cancel each other out.</li>
+          <li><strong style="color:var(--tan)">All-Counting (Count-All)</strong> — Both players score the total point value of all their scoring shoes each end.</li>
+          <li>Standard game plays to <strong>40 points</strong>, or best of a set number of ends.</li>
+        </ul>
+      </div>
+
+      <div class="flex gap-2 mt-3" style="flex-wrap:wrap">
+        <a href="https://www.horseshoepitching.com" target="_blank" rel="noopener"
+           class="btn btn-outline">
+          🔗 U.S. Horseshoe Pitchers Association (NHPA)
+        </a>
+        <a href="https://www.horseshoepitching.com/rules" target="_blank" rel="noopener"
+           class="btn btn-secondary">
+          📋 Official Rules &amp; Regulations
+        </a>
+      </div>
+    </section>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     PAGE: THROW LOG FORM
+════════════════════════════════════════════════════════════ -->
+<div class="page" id="page-throw">
+  <div class="page-hero">
+    <h1>Log a Session</h1>
+    <p>Start a new practice or game session, then enter each end's shoe results.</p>
+  </div>
+
+  <div class="page-inner">
+
+    <!-- Step progress bar -->
+    <div class="session-steps mt-4">
+      <div class="session-step active" id="step-label-setup">1. Session Setup</div>
+      <div class="session-step"        id="step-label-throw">2. Enter Throws</div>
+    </div>
+
+    <!-- ── STEP 1: Setup ── -->
+    <div id="step-setup">
+      <div class="card">
+        <div class="card-header">
+          <h3>Session Setup</h3>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Purpose</label>
+            <select id="session-type">
+              <option value="practice">Practice Session</option>
+              <option value="game">Record a Game</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Session Name</label>
+            <input type="text" id="session-name" placeholder="e.g. Tuesday Evening Practice">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Number of Players</label>
+            <select id="player-count">
+              <option value="1">1 Player</option>
+              <option value="2" selected>2 Players</option>
+              <option value="3">3 Players (teams)</option>
+              <option value="4">4 Players (teams)</option>
+            </select>
+          </div>
+          <div class="form-group" id="scoring-rules-row" style="display:none">
+            <label>Scoring Rules</label>
+            <select id="scoring-rules">
+              <option value="cancellation">Cancellation</option>
+              <option value="all-counting">All-Counting (Count-All)</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="player-inputs" class="form-row" style="flex-wrap:wrap"></div>
+
+        <div class="mt-3">
+          <button class="btn btn-primary btn-lg" id="btn-start-session">
+            ⚡ Start Session
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── STEP 2: Throw Entry ── -->
+    <div id="step-throw" style="display:none">
+
+      <!-- Session info bar -->
+      <div class="flex gap-2 mb-3" style="flex-wrap:wrap;align-items:center">
+        <span class="end-badge">End <span id="current-end-number">1</span></span>
+        <span class="badge badge-scorer" id="session-info-name"></span>
+        <span class="badge badge-leaner" id="session-info-type"></span>
+        <span class="badge badge-noscore" id="session-info-rules"></span>
+      </div>
+
+      <!-- Running score (games only) -->
+      <div id="score-display-section" style="display:none;margin-bottom:1.5rem">
+        <span class="eyebrow">Running Score</span>
+        <div class="stats-grid" id="running-scores"></div>
+      </div>
+
+      <!-- Shoe entry grid -->
+      <div class="card mb-3">
+        <div class="card-header">
+          <h3>Shoe Results — Closest to Furthest</h3>
+          <span class="badge badge-noscore">4 shoes per end</span>
+        </div>
+        <div class="shoe-grid" id="shoe-entries"></div>
+      </div>
+
+      <div class="flex gap-2" style="flex-wrap:wrap">
+        <button class="btn btn-primary" id="btn-submit-end">
+          ✓ Record End &amp; Continue
+        </button>
+        <button class="btn btn-secondary" id="btn-end-game">
+          🏁 End Session
+        </button>
+        <button class="btn btn-outline" id="btn-new-session">
+          + New Session
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     PAGE: DASHBOARD
+════════════════════════════════════════════════════════════ -->
+<div class="page" id="page-dashboard">
+  <div class="page-hero">
+    <h1>Throw Dashboard</h1>
+    <p>Visualize your shot distribution and track progress over time.</p>
+  </div>
+
+  <div class="page-inner wide">
+
+    <!-- Stat cards -->
+    <div class="stats-grid mt-4">
+      <div class="stat-card">
+        <div class="stat-value" id="stat-total">—</div>
+        <div class="stat-label">Total Throws</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="stat-ringers" style="font-size:1.4rem;color:var(--gold)">—</div>
+        <div class="stat-label">Ringers</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="stat-leaners" style="font-size:1.4rem;color:var(--grass)">—</div>
+        <div class="stat-label">Leaners</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="stat-scorers" style="font-size:1.4rem;color:#2C5F8A">—</div>
+        <div class="stat-label">Scorers</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="stat-noscores" style="font-size:1.4rem;color:var(--iron-light)">—</div>
+        <div class="stat-label">No Score</div>
+      </div>
+    </div>
+
+    <!-- Chart controls -->
+    <div class="chart-container mt-3">
+      <div class="chart-controls">
+        <div class="toggle-group">
+          <button class="toggle-btn toggle-view active" data-view="totals">Totals</button>
+          <button class="toggle-btn toggle-view"        data-view="percentages">%</button>
+        </div>
+        <div class="toggle-group">
+          <button class="toggle-btn toggle-limit active" data-limit="all">All</button>
+          <button class="toggle-btn toggle-limit" data-limit="50">Last 50</button>
+          <button class="toggle-btn toggle-limit" data-limit="100">Last 100</button>
+          <button class="toggle-btn toggle-limit" data-limit="1000">Last 1000</button>
+        </div>
+        <div style="margin-left:auto">
+          <select id="dash-player-filter" style="min-width:160px">
+            <option value="all">All Players</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="dash-no-data" style="text-align:center;padding:3rem;color:var(--iron-light);display:none">
+        <div style="font-size:3rem;margin-bottom:1rem">🧲</div>
+        <p>No throws recorded yet.<br>Head to <a href="#throw" style="color:var(--rust)">Log Throws</a> to start tracking!</p>
+      </div>
+
+      <div style="height:360px;position:relative">
+        <canvas id="throw-chart"></canvas>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     PAGE: SCORING
+════════════════════════════════════════════════════════════ -->
+<div class="page" id="page-scoring">
+  <div class="page-hero">
+    <h1>Game Scoring</h1>
+    <p>Follow a live or recent game end by end.</p>
+  </div>
+
+  <div class="page-inner wide">
+    <div class="card mt-4">
+      <div class="card-header">
+        <h3>Select Game</h3>
+        <button class="btn btn-outline btn-sm" id="btn-refresh-score">↻ Refresh</button>
+      </div>
+      <div class="form-group">
+        <label>Game Session</label>
+        <select id="score-session-select">
+          <option value="">— Select a game —</option>
+        </select>
+        <div class="form-hint">Only sessions recorded as "Game" appear here. 🟢 = active game.</div>
+      </div>
+    </div>
+
+    <div id="score-no-data" style="text-align:center;padding:3rem;color:var(--iron-light)">
+      <div style="font-size:3rem;margin-bottom:1rem">🏆</div>
+      <p>Select a game above to see the scoreboard.</p>
+    </div>
+
+    <div id="score-table-wrap" style="display:none" class="mt-3">
+      <div class="card-header" style="margin-bottom:1rem">
+        <div>
+          <h2 id="score-game-name">—</h2>
+          <span class="badge badge-scorer" id="score-rules-label"></span>
+        </div>
+      </div>
+
+      <div style="overflow-x:auto">
+        <table class="scoreboard" style="min-width:480px">
+          <thead id="score-thead"></thead>
+          <tbody id="score-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     PAGE: SETUP (Admin)
+════════════════════════════════════════════════════════════ -->
+<div class="page" id="page-setup">
+  <div class="page-hero">
+    <h1>Database Setup</h1>
+    <p>Connect IronPit to your Supabase project.</p>
+  </div>
+
+  <div class="page-inner">
+    <div class="setup-warning mt-4">
+      <span style="font-size:1.2rem">⚠️</span>
+      <div>
+        <strong>Administrator Access Only.</strong> This page connects the site to a Supabase backend.
+        Your project URL and anon key are stored locally in your browser. Share this page's URL carefully.
+        After setup, navigate away — the setup page is only needed once.
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><h3>Supabase Credentials</h3></div>
+
+      <div id="msg-setup" class="auth-message"></div>
+
+      <div class="form-group">
+        <label>Supabase Project URL</label>
+        <input type="text" id="setup-url" placeholder="https://xxxxxxxxxxxx.supabase.co">
+        <div class="form-hint">Found in your Supabase project → Settings → API</div>
+      </div>
+      <div class="form-group">
+        <label>Supabase Anon / Public Key</label>
+        <input type="password" id="setup-key" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...">
+        <div class="form-hint">The <em>anon</em> key (not the service_role key).</div>
+      </div>
+
+      <div class="flex gap-2 mt-3">
+        <button class="btn btn-primary" id="btn-save-setup">Save &amp; Test Connection</button>
+        <button class="btn btn-secondary" id="btn-clear-setup">Clear Saved Config</button>
+      </div>
+    </div>
+
+    <div class="card mt-3">
+      <div class="card-header"><h3>Database Schema</h3></div>
+      <p style="margin-bottom:1rem;font-size:0.9rem">Run this SQL in your Supabase SQL Editor to create the required tables and RLS policies.</p>
+      <div id="schema-block" style="background:var(--iron);color:var(--cream);border-radius:8px;padding:1.5rem;font-family:var(--font-mono);font-size:0.78rem;line-height:1.7;overflow-x:auto;white-space:pre"></div>
+      <div class="mt-2">
+        <button class="btn btn-outline btn-sm" onclick="SetupPage.copySchema()">Copy SQL</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── TOAST CONTAINER ─────────────────────────────────────── -->
+<div id="toast-container"></div>
+
+<!-- ── SCRIPTS ─────────────────────────────────────────────── -->
+<script src="js/supabase.js"></script>
+<script src="js/app.js"></script>
+<script src="js/throw-form.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/setup.js"></script>
+
+</body>
+</html>
